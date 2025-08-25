@@ -1,0 +1,8 @@
+/result
+/.cache
+/git-workhours
+
+# nixago: ignore-linked-files
+/.idea/watcherTasks.xml
+/.justfile
+/.editorconfig
