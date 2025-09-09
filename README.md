@@ -10,7 +10,7 @@ Git hooks to help maintain healthy work-life boundaries by managing when commits
 
 ## What it does
 
-`git-workhours` is composed of multiple git hooks that can:
+`git-workhours` is composed of few git hooks that can:
 
 - **Validate commits** – Warn or block commits outside configured work hours (`pre-commit` / `pre-push`)
 - **Adjust timestamps** – Automatically rewrite commit dates to fall within work hours (`post-commit`)
@@ -19,10 +19,9 @@ Git hooks to help maintain healthy work-life boundaries by managing when commits
 
 Your Git history is more than just code — it’s a permanent activity log. Commit timestamps can unintentionally expose:
 
+- **Your personal routines or timezone**
 - **Late-night coding sessions**
 - **Weekend or holiday work**
-- **Side projects bleeding into work repos**
-- **Your personal routines or timezone**
 
 ### Professional impact
 
@@ -38,7 +37,7 @@ go install github.com/krostar/git-workhours@latest
 
 ## Configuration
 
-You can customize all settings via git configuration, environment, and flags.
+You can customize all settings via git configuration (*`wh.*` section*), environment (*prefixed with `GIT_WORKHOURS_`*), and flags (*use `--help` to list them all*).
 
 ### Schedule format
 
@@ -46,7 +45,7 @@ The git configuration `wh.schedule`, env **`GIT_WORKHOURS_SCHEDULE`**, or flag `
 
 - **Format**: comma-separated list of 7 entries (one per day), **Sunday to Saturday**.
 - **Empty day**: nothing to specify if no work is scheduled.
-- **Multiple shifts per day**: separate with `+`.
+- **Multiple shifts per day**: separate them with `+`.
 - **Shift format**: `start-end`, where both `start` and `end` are `time.Duration` values (e.g. `9h`, `9h30m`, `17h45m`).
 
 #### Examples
@@ -64,13 +63,11 @@ This is useful if you want to *explicitly block only certain hours* (e.g., night
 
 #### Examples
 
-- **Block nights (no work allowed from 22h–06h)**: `20h-6h,20h-6h,20h-6h,20h-6h,20h-6h,20h-6h,20h-6h` → Commits are only allowed between 6h–22h every day.
 - **Block weekends entirely**: `0h-24h,,,,,,0h-24h` → Sunday and Saturday are fully blocked, commits allowed only Mon–Fri.
 
 ### Allow overtime
 
 The git configuration `wh.allowovertime`, env **`GIT_WORKHOURS_ALLOW_OVERTIME`**, or flag `--allow-overtime`, displays warning instead of failure when working overtime.
-Have no effects in `post-commit` hook.
 
 ### Fake valid time
 
@@ -81,7 +78,7 @@ Only used in `post-commit` hook.
 
 ### Manually
 
-Create hook in `.git/hooks/{pre-commit,post-commit,pre-push`, and `chmod +x` them.
+Create hook in your project's dir: `.git/hooks/{pre-commit,post-commit,pre-push`, and `chmod +x` them.
 
 Create a simple script file executing git-workhours, like for pre-commit:
 
@@ -90,9 +87,36 @@ Create a simple script file executing git-workhours, like for pre-commit:
 git-workhours hooks pre-commit
 ```
 
+If you want to do it for all projects, set the git hooks directory in your git config
+
+```ini
+// git config
+[core]
+    hooksPath = "$HOME/.local/share/git/hooks/"
+```
+
 ### Nix
 
 The flake exposes git-workhours package, and a git-workhours module to use within home-manager.
+
+```nix
+{
+  programs.git = {
+    user.email = "me@my.company";
+    wh.schedule = ",9h-19h,9h-19h,9h-19h,9h-19h,9h-19h,";
+
+    includes = [
+      {
+        condition = "gitdir:~/Personal/";
+        contents = {
+          user.email = "krostar@users.noreply.github.com";
+          wh.invertschedule = true;
+        };
+      }
+    ];
+  };
+}
+```
 
 ## License
 
