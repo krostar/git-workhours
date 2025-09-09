@@ -90,18 +90,20 @@ func (cmd *cmdPostCommit) Execute(ctx context.Context, _, _ []string) error {
 		}
 	}
 
-	if !cmd.cfg.FakeValidTime {
+	if !cmd.cfg.AllowOvertime || !cmd.cfg.FakeValidTime {
 		cmd.logger.WarnContext(ctx, "commit created outside of schedule, author time is over time", "previous_shift", schedule.PreviousShift(authorDate).String(), "next_shift", schedule.NextShift(authorDate).String())
 		return nil
 	}
 
-	probableTime, err := cmd.computeAuthorDate(ctx, &schedule, authorDate)
+	previousShift := schedule.PreviousShift(authorDate)
+
+	probableTime, err := cmd.fakeAuthorDate(ctx, previousShift)
 	if err != nil {
 		return fmt.Errorf("unable to calculate probable commit time: %w", err)
 	}
 
 	cmd.logger.InfoContext(ctx, "changing last commit date to avoid overtime",
-		"shift", schedule.PreviousShift(authorDate).String(),
+		"shift", previousShift.String(),
 		"old", authorDate.Format(time.DateTime),
 		"new", probableTime.Format(time.DateTime),
 	)
@@ -118,9 +120,17 @@ func (cmd *cmdPostCommit) Execute(ctx context.Context, _, _ []string) error {
 	return nil
 }
 
-func (*cmdPostCommit) computeAuthorDate(ctx context.Context, schedule *workhours.WeeklySchedule, authorDate time.Time) (time.Time, error) {
-	authorLastShift := schedule.PreviousShift(authorDate)
-
+// fakeAuthorDate generates a realistic commit time within the previous work shift boundaries
+// while preserving chronological order with the previous commit.
+//
+// Rules:
+// - starts with previous work shift time boundaries as the base window
+// - adjusts lower bound to previous commit time if it's after shift start (maintains chronological order)
+// - adjusts upper bound to previous commit time + 10min if previous commit is after shift end
+// - caps upper bound to current time if upper bound is in the future
+// - for tight windows (<45min): distributes randomly across available time
+// - for normal windows: adds realistic delay (5-15min base + 0-30min random) to simulate human timing
+func (*cmdPostCommit) fakeAuthorDate(ctx context.Context, authorLastShift *workhours.WorkingShift) (time.Time, error) {
 	lastCommitTime, err := git.GetCommitTime(ctx, "HEAD", 1)
 	if err != nil {
 		return time.Time{}, fmt.Errorf("could not get last commit time: %w", err)
@@ -129,17 +139,24 @@ func (*cmdPostCommit) computeAuthorDate(ctx context.Context, schedule *workhours
 	lowerBound := authorLastShift[0]
 	upperBound := authorLastShift[1]
 
-	if !lastCommitTime.IsZero() {
+	if lastCommitTime.After(lowerBound) {
 		lowerBound = lastCommitTime
 	}
 
-	if lastCommitTime.After(authorLastShift[1]) {
-		upperBound = time.Now()
+	if lastCommitTime.After(upperBound) {
+		upperBound = lastCommitTime.Add(time.Minute * 10)
 	}
 
-	if timeAvailable := upperBound.Sub(lowerBound); timeAvailable < time.Minute*15 {
+	if now := time.Now(); upperBound.After(now) {
+		upperBound = now
+	}
+
+	if timeAvailable := upperBound.Sub(lowerBound); timeAvailable < time.Minute*45 {
 		return lowerBound.Add(time.Duration(rand.Int64N(int64(timeAvailable)))), nil
 	}
 
-	return lowerBound.Add(time.Minute*time.Duration(3+rand.Int64N(2)) + time.Duration(rand.Int64N(int64(10*time.Minute)))), nil
+	return lowerBound.Add(
+		(time.Minute * time.Duration(5+rand.Int64N(10))) + // 5-15mn
+			time.Duration(rand.Int64N(int64(30*time.Minute))), // 0-30mn
+	), nil
 }
