@@ -2,6 +2,7 @@ package git
 
 import (
 	"context"
+	"encoding/base64"
 	"errors"
 	"fmt"
 	"os"
@@ -57,7 +58,12 @@ func AmendLastCommitDate(ctx context.Context, date time.Time) error {
 			}
 		}
 
-		envs["PATH"] = os.Getenv("PATH")
+		for _, key := range []string{"GNUPGHOME", "GPG_TTY", "HOME", "PATH", "PWD"} {
+			if value, isset := os.LookupEnv(key); isset {
+				envs[key] = value
+			}
+		}
+
 		envs["GIT_COMMITTER_DATE"] = rawDate
 
 		for k, v := range envs {
@@ -70,13 +76,8 @@ func AmendLastCommitDate(ctx context.Context, date time.Time) error {
 	git := exec.CommandContext(ctx, "git", cmdArgs...)
 	git.Env = cmdEnv
 
-	if err := git.Run(); err != nil {
-		var stdErr string
-		if exitErr := (*exec.ExitError)(nil); errors.As(err, &exitErr) {
-			stdErr = "; stderr: " + string(exitErr.Stderr)
-		}
-
-		return fmt.Errorf("unable to execute git command %q: %w%s", strings.Join(append([]string{"git"}, cmdArgs...), " "), err, stdErr)
+	if out, err := git.CombinedOutput(); err != nil {
+		return fmt.Errorf("unable to execute git command %q: %w b64(out):%s", strings.Join(append([]string{"git"}, cmdArgs...), " "), err, base64.StdEncoding.EncodeToString(out))
 	}
 
 	return nil
