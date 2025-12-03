@@ -28,7 +28,7 @@ func ParseWeeklySchedule(raw string) (WeeklySchedule, error) {
 
 		var previous *WorkingShiftSchedule
 
-		for _, shift := range strings.Split(day, "+") {
+		for shift := range strings.SplitSeq(day, "+") {
 			s := strings.Split(shift, "-")
 			if len(s) != 2 {
 				return schedule, fmt.Errorf("%s's shift is invalid: %s", time.Weekday(wd).String(), day)

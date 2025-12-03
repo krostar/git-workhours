@@ -9,7 +9,8 @@
   just.recipes = synergy-lib.autoimport {
     inherit args;
     source = ./just-recipes;
-    squash = true;
+    flatten = true;
+    merge = true;
   };
 
   intellij-idea.file-watchers = lib.mkForce [
@@ -25,7 +26,7 @@
     }
   ];
 
-  nixago.intellij-idea-file-watchers = deps.synergy.result.lib.harmony.nixago.files.intellij-idea.file-watchers data.${pkgs.system}.dev.intellij-idea.file-watchers pkgs;
+  nixago.intellij-idea-file-watchers = deps.synergy.result.lib.harmony.nixago.files.intellij-idea.file-watchers data.${pkgs.stdenv.hostPlatform.system}.dev.intellij-idea.file-watchers pkgs;
 
   git-cliff.enable = true;
 }

@@ -103,7 +103,8 @@ func Test_Source(t *testing.T) {
 						return "", errors.New("boom")
 					}
 
-					output := tc.gitConfigOutput
+					var output strings.Builder
+					output.WriteString(tc.gitConfigOutput)
 
 					if len(args) > 3 {
 						args = args[:len(args)-3]
@@ -112,11 +113,11 @@ func Test_Source(t *testing.T) {
 
 						for i := 1; i < len(args); i += 2 { // fake apply env to git output
 							split := strings.SplitN(strings.ReplaceAll(args[i], "'", ""), "=", 2)
-							output += "\n" + split[0] + " " + split[1]
+							output.WriteString("\n" + split[0] + " " + split[1])
 						}
 					}
 
-					return output, nil
+					return output.String(), nil
 				}),
 			)
 

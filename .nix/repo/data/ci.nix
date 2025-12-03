@@ -9,6 +9,16 @@
         exclusions = {
           rules = [
             {
+              path = "cmd/handler/hooks";
+              linters = ["revive"];
+              text = "package-directory-mismatch";
+            }
+            {
+              path = "internal/git/config";
+              linters = ["revive"];
+              text = "package-directory-mismatch";
+            }
+            {
               path = "internal/git/config/reflectx";
               linters = ["depguard"];
               text = "import 'reflect' is not allowed";

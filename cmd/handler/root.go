@@ -38,6 +38,7 @@ func (cmd *cmdRoot) PersistentHook() *cli.PersistentHook {
 	return &cli.PersistentHook{
 		BeforeFlagsDefinition: func(ctx context.Context) error {
 			clidi.InitializeContainer(ctx)
+
 			cmd.cfg = cmdRootConfig{LoggerVerbosity: "info"}
 			return nil
 		},

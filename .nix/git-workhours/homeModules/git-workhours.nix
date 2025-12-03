@@ -8,7 +8,7 @@
 
   options.programs.git-workhours = {
     enable = (lib.mkEnableOption "git-workhours, a set of git hooks to handle overtime") // {default = true;};
-    package = lib.mkPackageOption results.systemized.${pkgs.system}.packages.git-workhours "git-workhours" {};
+    package = lib.mkPackageOption results.systemized.${pkgs.stdenv.hostPlatform.system}.packages.git-workhours "git-workhours" {};
     schedule = lib.mkOption {
       type = lib.types.str;
       description = "work schedule, starting sunday";
