@@ -44,7 +44,7 @@
         };
       };
 
-      programs.git.extraConfig = {
+      programs.git.settings = {
         core.hooksPath = config.xdg.dataHome + "/git/hooks/";
         wh.schedule = cfg.schedule;
       };

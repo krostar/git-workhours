@@ -23,7 +23,7 @@ in
           (root + "/go.sum")
         ];
       };
-      vendorHash = "sha256-zgRwmmcKtGDNTl6W5xg2Ia//59RJlGDHXT33sbZl2FI=";
+    vendorHash = "sha256-zgRwmmcKtGDNTl6W5xg2Ia//59RJlGDHXT33sbZl2FI=";
 
     ldflags = lib.lists.optionals isNotDirty ["-s" "-w"];
     doCheck = isNotDirty;
