@@ -401,6 +401,7 @@ func Test_pathWalker_walk(t *testing.T) {
 				b := v.Type().String() == "int"
 
 				v.SetInt(42)
+
 				c := o.IsNil()
 				err := applyWO()
 
@@ -417,7 +418,9 @@ func Test_pathWalker_walk(t *testing.T) {
 			expectValue: func(t *testing.T, _ func() error, o, v reflect.Value) (test.TestingT, bool) {
 				a := v.Type().String() == "int"
 				b := o.Elem().FieldByName("Field").Int() == 21
+
 				v.SetInt(42)
+
 				c := o.Elem().FieldByName("Field").Int() == 42
 
 				return t, a && b && c
@@ -537,12 +540,14 @@ func Test_pathWalker_getStructFieldByName(t *testing.T) {
 		"field exists below nil exported embedded struct ptr": {
 			value: func() reflect.Value {
 				type EmbeddedType struct{ Embedded int }
+
 				s := struct{ *EmbeddedType }{}
 				return reflect.ValueOf(&s).Elem()
 			}(),
 			fieldName: "embedded",
 			expectValue: func(t *testing.T, applyWO func() error, o, v reflect.Value) (test.TestingT, bool) {
 				v.SetInt(42)
+
 				err := applyWO()
 				return t, err == nil && o.FieldByName("Embedded").Int() == 42
 			},
@@ -550,12 +555,14 @@ func Test_pathWalker_getStructFieldByName(t *testing.T) {
 		"field exists below nil non exported embedded struct ptr without unsafe": {
 			value: func() reflect.Value {
 				type embeddedType struct{ Embedded int }
+
 				s := struct{ *embeddedType }{}
 				return reflect.ValueOf(&s).Elem()
 			}(),
 			fieldName: "embedded",
 			expectValue: func(t *testing.T, applyWO func() error, _, v reflect.Value) (test.TestingT, bool) {
 				v.SetInt(42)
+
 				err := applyWO()
 				return t, err != nil && strings.Contains(err.Error(), "dst can't be set without using unsafe, and unsafe is disabled")
 			},
@@ -620,7 +627,9 @@ func Test_pathWalker_walkInMap(t *testing.T) {
 			path:  []string{"key"},
 			expectValue: func(t *testing.T, applyWO func() error, o, v reflect.Value) (test.TestingT, bool) {
 				a := o.IsNil()
+
 				v.SetInt(42)
+
 				b := o.IsNil()
 				err := applyWO()
 				c := err == nil && !o.IsNil() && o.MapIndex(reflect.ValueOf("key")).Int() == 42
@@ -632,7 +641,9 @@ func Test_pathWalker_walkInMap(t *testing.T) {
 			path:  []string{"key"},
 			expectValue: func(t *testing.T, applyWO func() error, o, v reflect.Value) (test.TestingT, bool) {
 				a := v.Int() == 21
+
 				v.SetInt(42)
+
 				err := applyWO()
 				b := err == nil && o.MapIndex(reflect.ValueOf("key")).Int() == 42
 				return t, a && b
@@ -643,7 +654,9 @@ func Test_pathWalker_walkInMap(t *testing.T) {
 			path:  []string{"newkey"},
 			expectValue: func(t *testing.T, applyWO func() error, o, v reflect.Value) (test.TestingT, bool) {
 				a := o.MapIndex(reflect.ValueOf("key")).Int() == 21
+
 				v.SetInt(42)
+
 				err := applyWO()
 				b := err == nil && o.MapIndex(reflect.ValueOf("newkey")).Int() == 42
 				return t, a && b
@@ -704,7 +717,9 @@ func Test_pathWalker_walkInSlice(t *testing.T) {
 			path:  []string{"10"},
 			expectValue: func(t *testing.T, applyWO func() error, o, v reflect.Value) (test.TestingT, bool) {
 				a := o.Len() == 5
+
 				v.SetInt(42)
+
 				err := applyWO()
 				b := err == nil && o.Len() == 11
 				c := b && o.Index(10).Int() == 42
@@ -789,6 +804,7 @@ func Test_pathWalker_reflectSetValue(t *testing.T) {
 		"type mismatch": {
 			setup: func() (reflect.Value, reflect.Value) {
 				var dst int
+
 				src := "string"
 				return reflect.ValueOf(&dst).Elem(), reflect.ValueOf(src)
 			},
@@ -797,6 +813,7 @@ func Test_pathWalker_reflectSetValue(t *testing.T) {
 		"can set": {
 			setup: func() (reflect.Value, reflect.Value) {
 				var dst int
+
 				src := 42
 				return reflect.ValueOf(&dst).Elem(), reflect.ValueOf(src)
 			},

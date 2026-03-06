@@ -43,6 +43,10 @@
               linters = ["gocritic"];
               text = "hugeParam: ws is heavy";
             }
+            {
+              linters = ["gosec"];
+              text = "G602: slice index out of range"; # this linter does not work with type alias fixed-length array WeeklySchedule
+            }
           ];
         };
       };

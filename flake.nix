@@ -1,6 +1,6 @@
 {
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable-small";
     synergy = {
       url = "github:krostar/synergy";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -23,8 +23,12 @@
             packages = e:
               builtins.mapAttrs (
                 _: units:
-                  {inherit (units.git-workhours) git-workhours;}
-                  // (synergy-lib.attrsets.liftChildren "-" (lib.attrsets.filterAttrs (k: _: k != "git-workhours") units))
+                  {
+                    inherit (units.git-workhours) git-workhours;
+                  }
+                  // (synergy-lib.attrsets.liftChildren "-" (
+                    lib.attrsets.filterAttrs (k: _: k != "git-workhours") units
+                  ))
               )
               e;
           };
